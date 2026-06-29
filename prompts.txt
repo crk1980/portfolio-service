@@ -1,0 +1,55 @@
+API prompts for the Portfolio Performance application:
+
+POST /api/performance/daily-return
+Request JSON fields:
+- portfolioId (string, required)
+- valuationDate (ISO date, optional)
+- beginMarketValue (number, required)
+- endMarketValue (number, required)
+- netCashFlow (number, optional)
+- benchmarkReturnPct (decimal, required, e.g. 0.01 = 1%)
+- currency (string, required)
+- requestedBy (string, required)
+- transactionId (string, required, must be unique for each processed request)
+- accountId (string, required)
+- transactionType (string, required)
+- amount (number, required)
+- sequenceNumber (number, required)
+- requestId (string, required)
+- status (string, optional)
+- tolerance (decimal, optional, default 0.005)
+
+Example request payload:
+{
+  "portfolioId": "PORT1",
+  "valuationDate": "2026-06-28",
+  "beginMarketValue": 100000,
+  "endMarketValue": 100800,
+  "netCashFlow": 0,
+  "benchmarkReturnPct": 0.007,
+  "currency": "USD",
+  "requestedBy": "investor@example.com",
+  "transactionId": "TXN-98765",
+  "accountId": "ACC-001",
+  "transactionType": "DEPOSIT",
+  "amount": 1000,
+  "sequenceNumber": 1,
+  "requestId": "REQ-12345",
+  "status": "NEW",
+  "tolerance": 0.005
+}
+
+Expected response fields:
+- dailyReturnPercent
+- benchmarkReturnPercent
+- excessReturnPercent
+- status (VALID, REVIEW_REQUIRED, INVALID_INPUT)
+- message
+
+Health check endpoint:
+GET /api/performance/health
+Response:
+{
+  "status": "UP",
+  "service": "Portfolio Performance"
+}

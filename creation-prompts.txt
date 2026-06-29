@@ -1,0 +1,7 @@
+Prompts used to create this application:
+
+1. create requests as per image and api should validate it as expected outcome. Here transactionid is mandatory and its not duplicate
+
+2. create text file what are all prompts used to create this application
+
+Note: This file contains the actual user prompts given during the app creation workflow, not the API request payload schema.
