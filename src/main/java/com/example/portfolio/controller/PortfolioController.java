@@ -1,6 +1,8 @@
 package com.example.portfolio.controller;
 
+import com.example.portfolio.dto.AttributionSummary;
 import com.example.portfolio.dto.DailyReturnSummary;
+import com.example.portfolio.dto.PortfolioAttributionRequest;
 import com.example.portfolio.dto.PortfolioValuationRequest;
 import com.example.portfolio.service.PortfolioPerformanceService;
 import jakarta.validation.Valid;
@@ -30,6 +32,12 @@ public class PortfolioController {
     @PostMapping("/daily-return")
     public ResponseEntity<DailyReturnSummary> dailyReturn(@Valid @RequestBody PortfolioValuationRequest req) {
         DailyReturnSummary summary = service.calculateDailyReturn(req);
+        return ResponseEntity.ok(summary);
+    }
+
+    @PostMapping("/attribution")
+    public ResponseEntity<AttributionSummary> attribution(@Valid @RequestBody PortfolioAttributionRequest req) {
+        AttributionSummary summary = service.calculateAttribution(req);
         return ResponseEntity.ok(summary);
     }
 }

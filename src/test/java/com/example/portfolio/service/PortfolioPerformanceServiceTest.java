@@ -1,12 +1,16 @@
 package com.example.portfolio.service;
 
+import com.example.portfolio.dto.AttributionGroup;
+import com.example.portfolio.dto.AttributionSummary;
 import com.example.portfolio.dto.DailyReturnSummary;
+import com.example.portfolio.dto.PortfolioAttributionRequest;
 import com.example.portfolio.dto.PortfolioValuationRequest;
 import com.example.portfolio.dto.ValidationStatus;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -151,5 +155,58 @@ class PortfolioPerformanceServiceTest {
         DailyReturnSummary duplicateSummary = service.calculateDailyReturn(duplicate);
         assertEquals(ValidationStatus.INVALID_INPUT, duplicateSummary.getStatus());
         assertTrue(duplicateSummary.getMessage().contains("transactionId is duplicate"));
+    }
+
+    @Test
+    void calculateAttribution_validPrimaryPricing() {
+        PortfolioAttributionRequest req = new PortfolioAttributionRequest();
+        req.setPortfolioId("PORT1");
+        req.setRequestId("REQ-12345");
+        req.setCurrency("USD");
+        req.setRequestedBy("advisor02");
+        req.setValuationDate(LocalDate.of(2026, 6, 28));
+
+        AttributionGroup equity = new AttributionGroup();
+        equity.setGroupName("equity");
+        equity.setWeightPct(new BigDecimal("60"));
+        equity.setReturnPct(new BigDecimal("1.5"));
+
+        req.setGroups(List.of(equity));
+
+        AttributionSummary summary = service.calculateAttribution(req);
+
+        assertEquals("PORT1", summary.getPortfolioId());
+        assertEquals("REQ-12345", summary.getRequestId());
+        assertEquals(new BigDecimal("0.900000"), summary.getGroupContributions().get(0).getContributionPct());
+        assertEquals("PRIMARY", summary.getGroupContributions().get(0).getPricingMode());
+        assertEquals(new BigDecimal("0.900000"), summary.getTotalContributionPct());
+        assertFalse(summary.isDegraded());
+        assertTrue(summary.getWarnings().isEmpty());
+        assertEquals("VALID", summary.getStatus());
+    }
+
+    @Test
+    void calculateAttribution_withFallbackPricing() {
+        PortfolioAttributionRequest req = new PortfolioAttributionRequest();
+        req.setPortfolioId("PORT1");
+        req.setRequestId("REQ-12345");
+        req.setCurrency("USD");
+        req.setRequestedBy("advisor02");
+        req.setValuationDate(LocalDate.of(2026, 6, 28));
+
+        AttributionGroup cash = new AttributionGroup();
+        cash.setGroupName("Cash");
+        cash.setWeightPct(new BigDecimal("40"));
+        cash.setReturnPct(null);
+
+        req.setGroups(List.of(cash));
+
+        AttributionSummary summary = service.calculateAttribution(req);
+
+        assertEquals(new BigDecimal("0.180000"), summary.getGroupContributions().get(0).getContributionPct());
+        assertEquals("FALLBACK", summary.getGroupContributions().get(0).getPricingMode());
+        assertTrue(summary.isDegraded());
+        assertEquals(1, summary.getWarnings().size());
+        assertTrue(summary.getWarnings().get(0).contains("Fall back pricing used for Cash"));
     }
 }
