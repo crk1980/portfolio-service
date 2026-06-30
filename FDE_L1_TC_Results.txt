@@ -1,0 +1,134 @@
+1. Transaction id duplication check
+{
+    "portfolioId": "PORT1",
+    "valuationDate": [
+        2026,
+        6,
+        28
+    ],
+    "beginMarketValue": 100000,
+    "endMarketValue": 100800,
+    "netCashFlow": 0,
+    "benchmarkReturnPct": 0.007,
+    "tolerance": 0.005,
+    "currency": "USD",
+    "requestedBy": "investor@example.com",
+    "transactionId": "TXN-98765",
+    "accountId": "ACC-001",
+    "transactionType": "DEPOSIT",
+    "amount": 1000,
+    "sequenceNumber": 1,
+    "requestId": "REQ-12345",
+    "status": null
+}
+
+Response:( No duplication so valid)
+{
+    "valuationDate": "2026-06-28",
+    "dailyReturnPercent": 0.800000,
+    "benchmarkReturnPercent": 0.700000,
+    "excessReturnPercent": 0.100000,
+    "status": "VALID",
+    "message": "VALID"
+}
+
+2. Transaction id duplication check - If we run same transaction its give 
+
+{
+    "portfolioId": "PORT1",
+    "valuationDate": [
+        2026,
+        6,
+        28
+    ],
+    "beginMarketValue": 100000,
+    "endMarketValue": 100800,
+    "netCashFlow": 0,
+    "benchmarkReturnPct": 0.007,
+    "tolerance": 0.005,
+    "currency": "USD",
+    "requestedBy": "investor@example.com",
+    "transactionId": "TXN-98765",
+    "accountId": "ACC-001",
+    "transactionType": "DEPOSIT",
+    "amount": 1000,
+    "sequenceNumber": 1,
+    "requestId": "REQ-12345",
+    "status": null
+}
+
+Response:
+{
+    "valuationDate": null,
+    "dailyReturnPercent": null,
+    "benchmarkReturnPercent": null,
+    "excessReturnPercent": null,
+    "status": "INVALID_INPUT",
+    "message": "transactionId is duplicate"
+}
+
+3.Currency validation
+
+{
+    "portfolioId": "PORT1",
+    "valuationDate": [
+        2026,
+        6,
+        28
+    ],
+    "beginMarketValue": 100000,
+    "endMarketValue": 100800,
+    "netCashFlow": 0,
+    "benchmarkReturnPct": 0.007,
+    "tolerance": 0.005,
+    "currency": "",
+    "requestedBy": "investor@example.com",
+    "transactionId": "TXN-98767",
+    "accountId": "ACC-001",
+    "transactionType": "DEPOSIT",
+    "amount": 1000,
+    "sequenceNumber": 1,
+    "requestId": "REQ-12345",
+    "status": null
+}
+
+Response:
+{
+    "errors": {
+        "currency": "currency is required"
+    },
+    "status": "INVALID_INPUT"
+}
+
+4: Invalid amount check
+
+{
+    "portfolioId": "PORT1",
+    "valuationDate": [
+        2026,
+        6,
+        28
+    ],
+    "beginMarketValue": 100000,
+    "endMarketValue": 100800,
+    "netCashFlow": 0,
+    "benchmarkReturnPct": 0.007,
+    "tolerance": 0.005,
+    "currency": "USD",
+    "requestedBy": "investor@example.com",
+    "transactionId": "TXN-98768",
+    "accountId": "ACC-001",
+    "transactionType": "DEPOSIT",
+    "amount": -1,
+    "sequenceNumber": 1,
+    "requestId": "REQ-12345",
+    "status": null
+}
+
+Response:
+{
+    "errors": {
+        "amount": "amount must be >= 0"
+    },
+    "status": "INVALID_INPUT"
+}

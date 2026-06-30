@@ -1,0 +1,61 @@
+1. TC FAll back return verification
+{
+    "portfolioId": "PORT1",
+    "valuationDate": [
+        2026,
+        6,
+        28
+    ],
+    "requestId": "REQ-12345",
+    "currency": "USD",
+    "requestedBy": "advisor02",
+    "groups": [
+        {
+            "groupName": "equity",
+            "weightPct": 60,
+            "returnPct": 1.5
+        },
+        {
+            "groupName": "fixedIncome",
+            "weightPct": 30,
+            "returnPct": 0.4
+        },
+        {
+            "groupName": "cash",
+            "weightPct": 10,
+            "returnPct": null,
+            "fallbackReturnPct":0.05
+        }
+    ]
+}
+
+Response:
+{
+    "portfolioId": "PORT1",
+    "valuationDate": "2026-06-28",
+    "requestId": "REQ-12345",
+    "totalContributionPct": 1.065000,
+    "groupContributions": [
+        {
+            "groupName": "equity",
+            "contributionPct": 0.900000,
+            "pricingMode": "PRIMARY"
+        },
+        {
+            "groupName": "fixedIncome",
+            "contributionPct": 0.120000,
+            "pricingMode": "PRIMARY"
+        },
+        {
+            "groupName": "cash",
+            "contributionPct": 0.045000,
+            "pricingMode": "FALLBACK_USED"
+        }
+    ],
+    "status": "VALID",
+    "degraded": true,
+    "warnings": [
+        "Fallback return used for cash"
+    ],
+    "processedAt": "2026-06-30T01:42:05.381050500Z"
+}
