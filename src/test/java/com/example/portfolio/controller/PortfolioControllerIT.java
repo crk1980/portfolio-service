@@ -24,6 +24,11 @@ class PortfolioControllerIT {
                 "\"portfolioId\":\"PORT1\"," +
                 "\"valuationDate\":[2026,6,28]," +
                 "\"requestId\":\"REQ-12345\"," +
+                "\"transactionId\":\"TXN-12345\"," +
+                "\"sequenceNumber\":2," +
+                "\"accountId\":\"ACC-201\"," +
+                "\"transactionType\":\"DEBIT\"," +
+                "\"amount\":40," +
                 "\"currency\":\"USD\"," +
                 "\"requestedBy\":\"advisor02\"," +
                 "\"groups\":[{" +
@@ -51,6 +56,11 @@ class PortfolioControllerIT {
                 "\"portfolioId\":\"PORT1\"," +
                 "\"valuationDate\":[2026,6,28]," +
                 "\"requestId\":\"REQ-12346\"," +
+                "\"transactionId\":\"TXN-12346\"," +
+                "\"sequenceNumber\":1," +
+                "\"accountId\":\"ACC-201\"," +
+                "\"transactionType\":\"CREDIT\"," +
+                "\"amount\":100," +
                 "\"currency\":\"USD\"," +
                 "\"requestedBy\":\"advisor02\"," +
                 "\"groups\":[{" +
@@ -79,6 +89,11 @@ class PortfolioControllerIT {
                 "\"portfolioId\":\"PORT1\"," +
                 "\"valuationDate\":[2026,6,28]," +
                 "\"requestId\":\"REQ-12347\"," +
+                "\"transactionId\":\"TXN-12347\"," +
+                "\"sequenceNumber\":3," +
+                "\"accountId\":\"ACC-201\"," +
+                "\"transactionType\":\"CREDIT\"," +
+                "\"amount\":-10," +
                 "\"currency\":\"USD\"," +
                 "\"requestedBy\":\"advisor02\"," +
                 "\"groups\":[{" +
@@ -101,6 +116,11 @@ class PortfolioControllerIT {
                 "\"portfolioId\":\"PORT1\"," +
                 "\"valuationDate\":[2026,6,28]," +
                 "\"requestId\":\"REQ-12348\"," +
+                "\"transactionId\":\"TXN-12348\"," +
+                "\"sequenceNumber\":4," +
+                "\"accountId\":\"ACC-201\"," +
+                "\"transactionType\":\"CREDIT\"," +
+                "\"amount\":100," +
                 "\"currency\":\"USD\"," +
                 "\"requestedBy\":\"advisor02\"," +
                 "\"groups\":[{" +
@@ -126,6 +146,11 @@ class PortfolioControllerIT {
                 "\"portfolioId\":\"PORT1\"," +
                 "\"valuationDate\":[2026,6,28]," +
                 "\"requestId\":\"REQ-12349\"," +
+                "\"transactionId\":\"TXN-12349-A\"," +
+                "\"sequenceNumber\":5," +
+                "\"accountId\":\"ACC-201\"," +
+                "\"transactionType\":\"CREDIT\"," +
+                "\"amount\":100," +
                 "\"currency\":\"USD\"," +
                 "\"requestedBy\":\"advisor02\"," +
                 "\"groups\":[{" +
@@ -139,6 +164,11 @@ class PortfolioControllerIT {
                 "\"portfolioId\":\"PORT1\"," +
                 "\"valuationDate\":[2026,6,28]," +
                 "\"requestId\":\"REQ-12349\"," +
+                "\"transactionId\":\"TXN-12349-B\"," +
+                "\"sequenceNumber\":6," +
+                "\"accountId\":\"ACC-201\"," +
+                "\"transactionType\":\"DEBIT\"," +
+                "\"amount\":40," +
                 "\"currency\":\"USD\"," +
                 "\"requestedBy\":\"advisor02\"," +
                 "\"groups\":[{" +

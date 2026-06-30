@@ -1,0 +1,69 @@
+[
+  // Valid request: equity with primary pricing, cash uses fallback return.
+  {
+    "portfolioId": "PORT1",
+    "valuationDate": [2026, 6, 28],
+    "requestId": "REQ-1",
+    "transactionId": "TXN-1001",
+    "sequenceNumber": 2,
+    "accountId": "ACC-201",
+    "transactionType": "DEBIT",
+    "amount": 40,
+    "currency": "USD",
+    "requestedBy": "advisor01",
+    "groups": [
+      { "groupName": "equity", "weightPct": 60, "returnPct": 1.5 },
+      { "groupName": "cash", "weightPct": 40, "returnPct": null }
+    ]
+  },
+  // Valid request: fixed income uses fallback, equity uses primary pricing.
+  {
+    "portfolioId": "PORT1",
+    "valuationDate": [2026, 6, 28],
+    "requestId": "REQ-2",
+    "transactionId": "TXN-1001",
+    "sequenceNumber": 1,
+    "accountId": "ACC-201",
+    "transactionType": "CREDIT",
+    "amount": 100,
+    "currency": "USD",
+    "requestedBy": "advisor02",
+    "groups": [
+      { "groupName": "fixed income", "weightPct": 50, "returnPct": null },
+      { "groupName": "equity", "weightPct": 50, "returnPct": 1.5 }
+    ]
+  },
+  // Idempotency test case: duplicate requestId should preserve first processed result.
+  {
+    "portfolioId": "PORT1",
+    "valuationDate": [2026, 6, 28],
+    "requestId": "REQ-2-DUP",
+    "transactionId": "TXN-2002",
+    "sequenceNumber": 2,
+    "accountId": "ACC-201",
+    "transactionType": "DEBIT",
+    "amount": 40,
+    "currency": "USD",
+    "requestedBy": "advisor02",
+    "groups": [
+      { "groupName": "cash", "weightPct": 40, "returnPct": 0.5 },
+      { "groupName": "equity", "weightPct": 60, "returnPct": 1.5 }
+    ]
+  },
+  // Invalid request: total group weight is outside the allowed 99-101% range.
+  {
+    "portfolioId": "PORT1",
+    "valuationDate": [2026, 6, 28],
+    "requestId": "REQ-3",
+    "transactionId": "TXN-1003",
+    "sequenceNumber": 3,
+    "accountId": "ACC-201",
+    "transactionType": "CREDIT",
+    "amount": -10,
+    "currency": "USD",
+    "requestedBy": "advisor03",
+    "groups": [
+      { "groupName": "equity", "weightPct": 98, "returnPct": 1.5 }
+    ]
+  }
+]

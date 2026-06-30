@@ -41,6 +41,22 @@ class PortfolioPerformanceServiceTest {
         return req;
     }
 
+    private PortfolioAttributionRequest createBaseAttributionRequest(String requestId, String transactionId) {
+        PortfolioAttributionRequest req = new PortfolioAttributionRequest();
+        req.setPortfolioId("PORT1");
+        req.setRequestId(requestId);
+        req.setTransactionId(transactionId);
+        req.setSequenceNumber(1L);
+        req.setAccountId("ACC-201");
+        req.setTransactionType("DEBIT");
+        req.setAmount(new BigDecimal("40"));
+        req.setCurrency("USD");
+        req.setRequestedBy("advisor02");
+        req.setValuationDate(LocalDate.of(2026, 6, 28));
+        return req;
+    }
+
+    // Verify valid daily return calculation and expected percentage output when all inputs are correct.
     @Test
     void calculateDailyReturn_valid() {
         PortfolioValuationRequest req = createBaseRequest();
@@ -60,6 +76,7 @@ class PortfolioPerformanceServiceTest {
         assertEquals("VALID", s.getMessage());
     }
 
+    // Ensure input with negative begin or end market value is rejected as invalid input.
     @Test
     void rejectInvalidForNegativeBeginOrEndMarketValue() {
         PortfolioValuationRequest req = createBaseRequest();
@@ -82,6 +99,7 @@ class PortfolioPerformanceServiceTest {
         assertTrue(s.getMessage().contains("endMarketValue must be >= 0"));
     }
 
+    // Ensure missing currency is rejected with INVALID_INPUT and a descriptive message.
     @Test
     void rejectInvalidWhenCurrencyMissing() {
         PortfolioValuationRequest req = createBaseRequest();
@@ -96,6 +114,7 @@ class PortfolioPerformanceServiceTest {
         assertTrue(s.getMessage().contains("currency is required"));
     }
 
+    // Reject cases where beginMarketValue is zero but endMarketValue or netCashFlow is non-zero.
     @Test
     void rejectInvalidWhenBeginZeroAndEndNotZero() {
         PortfolioValuationRequest req = createBaseRequest();
@@ -110,6 +129,7 @@ class PortfolioPerformanceServiceTest {
         assertTrue(s.getMessage().contains("beginMarketValue is 0 and endMarketValue or netCashFlow is not zero"));
     }
 
+    // Verify REVIEW_REQUIRED when portfolio return difference exceeds the tolerance threshold.
     @Test
     void reviewRequiredWhenDifferenceExceedsFivePercent() {
         PortfolioValuationRequest req = createBaseRequest();
@@ -126,6 +146,7 @@ class PortfolioPerformanceServiceTest {
         assertEquals(new BigDecimal("5.900000"), s.getExcessReturnPercent());
     }
 
+    // Verify REVIEW_REQUIRED when net cash flow is more than 20% of the begin market value.
     @Test
     void reviewRequiredWhenNetCashFlowOver20PercentOfBeginValue() {
         PortfolioValuationRequest req = createBaseRequest();
@@ -141,6 +162,7 @@ class PortfolioPerformanceServiceTest {
         assertTrue(s.getExcessReturnPercent().abs().compareTo(new BigDecimal("20.000000")) > 0);
     }
 
+    // Confirm duplicate transactionIds are rejected after the first processed request.
     @Test
     void rejectDuplicateTransactionId() {
         PortfolioValuationRequest first = createBaseRequest();
@@ -165,14 +187,10 @@ class PortfolioPerformanceServiceTest {
         assertTrue(duplicateSummary.getMessage().contains("transactionId is duplicate"));
     }
 
+    // Test valid attribution processing using primary pricing for all groups.
     @Test
     void calculateAttribution_validPrimaryPricing() {
-        PortfolioAttributionRequest req = new PortfolioAttributionRequest();
-        req.setPortfolioId("PORT1");
-        req.setRequestId("REQ-12345");
-        req.setCurrency("USD");
-        req.setRequestedBy("advisor02");
-        req.setValuationDate(LocalDate.of(2026, 6, 28));
+        PortfolioAttributionRequest req = createBaseAttributionRequest("REQ-12345", "TXN-1001");
 
         AttributionGroup equity = new AttributionGroup();
         equity.setGroupName("equity");
@@ -198,14 +216,10 @@ class PortfolioPerformanceServiceTest {
         assertEquals("VALID", summary.getStatus());
     }
 
+    // Test fallback pricing when a group is missing returnPct and fallback data exists.
     @Test
     void calculateAttribution_withFallbackPricing() {
-        PortfolioAttributionRequest req = new PortfolioAttributionRequest();
-        req.setPortfolioId("PORT1");
-        req.setRequestId("REQ-12345");
-        req.setCurrency("USD");
-        req.setRequestedBy("advisor02");
-        req.setValuationDate(LocalDate.of(2026, 6, 28));
+        PortfolioAttributionRequest req = createBaseAttributionRequest("REQ-12345", "TXN-1002");
 
         AttributionGroup cash = new AttributionGroup();
         cash.setGroupName("Cash");
@@ -228,14 +242,10 @@ class PortfolioPerformanceServiceTest {
         assertTrue(summary.getWarnings().get(0).contains("Fallback return used for Cash"));
     }
 
+    // Ensure invalid total group weight is rejected with INVALID_INPUT.
     @Test
     void rejectAttributionWhenTotalWeightOutsideRange() {
-        PortfolioAttributionRequest req = new PortfolioAttributionRequest();
-        req.setPortfolioId("PORT1");
-        req.setRequestId("REQ-12346");
-        req.setCurrency("USD");
-        req.setRequestedBy("advisor02");
-        req.setValuationDate(LocalDate.of(2026, 6, 28));
+        PortfolioAttributionRequest req = createBaseAttributionRequest("REQ-12346", "TXN-1003");
 
         AttributionGroup equity = new AttributionGroup();
         equity.setGroupName("equity");
@@ -250,14 +260,10 @@ class PortfolioPerformanceServiceTest {
         assertTrue(summary.getWarnings().get(0).contains("Total group weight must be between 99 and 101 percent"));
     }
 
+    // Test degraded attribution when a missing returnPct has no fallback available.
     @Test
     void calculateAttribution_degradedWhenMissingReturnNoFallback() {
-        PortfolioAttributionRequest req = new PortfolioAttributionRequest();
-        req.setPortfolioId("PORT1");
-        req.setRequestId("REQ-12347");
-        req.setCurrency("USD");
-        req.setRequestedBy("advisor02");
-        req.setValuationDate(LocalDate.of(2026, 6, 28));
+        PortfolioAttributionRequest req = createBaseAttributionRequest("REQ-12347", "TXN-1004");
 
         AttributionGroup other = new AttributionGroup();
         other.setGroupName("real estate");
@@ -274,14 +280,10 @@ class PortfolioPerformanceServiceTest {
         assertTrue(summary.getWarnings().get(0).contains("Missing returnPct and no fallback available for real estate"));
     }
 
+    // Test REVIEW_REQUIRED when multiple groups are missing returns and no fallback is available.
     @Test
     void calculateAttribution_reviewRequiredWhenMultipleMissingReturnsNoFallback() {
-        PortfolioAttributionRequest req = new PortfolioAttributionRequest();
-        req.setPortfolioId("PORT1");
-        req.setRequestId("REQ-12348");
-        req.setCurrency("USD");
-        req.setRequestedBy("advisor02");
-        req.setValuationDate(LocalDate.of(2026, 6, 28));
+        PortfolioAttributionRequest req = createBaseAttributionRequest("REQ-12348", "TXN-1005");
 
         AttributionGroup groupA = new AttributionGroup();
         groupA.setGroupName("real estate");
@@ -304,14 +306,10 @@ class PortfolioPerformanceServiceTest {
         assertTrue(summary.getWarnings().stream().anyMatch(w -> w.contains("commodities")));
     }
 
+    // Verify idempotent behavior: repeated calls with the same requestId return the same cached attribution.
     @Test
     void calculateAttribution_isIdempotentForSameRequestId() {
-        PortfolioAttributionRequest req = new PortfolioAttributionRequest();
-        req.setPortfolioId("PORT1");
-        req.setRequestId("REQ-12349");
-        req.setCurrency("USD");
-        req.setRequestedBy("advisor02");
-        req.setValuationDate(LocalDate.of(2026, 6, 28));
+        PortfolioAttributionRequest req = createBaseAttributionRequest("REQ-12349", "TXN-1006");
 
         AttributionGroup equity = new AttributionGroup();
         equity.setGroupName("equity");
@@ -327,12 +325,7 @@ class PortfolioPerformanceServiceTest {
 
         AttributionSummary first = service.calculateAttribution(req);
 
-        PortfolioAttributionRequest duplicateRequest = new PortfolioAttributionRequest();
-        duplicateRequest.setPortfolioId("PORT1");
-        duplicateRequest.setRequestId("REQ-12349");
-        duplicateRequest.setCurrency("USD");
-        duplicateRequest.setRequestedBy("advisor02");
-        duplicateRequest.setValuationDate(LocalDate.of(2026, 6, 28));
+        PortfolioAttributionRequest duplicateRequest = createBaseAttributionRequest("REQ-12349", "TXN-1007");
 
         AttributionGroup altered = new AttributionGroup();
         altered.setGroupName("cash");

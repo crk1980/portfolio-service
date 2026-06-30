@@ -1,40 +1,27 @@
 1. TC FAll back return verification
 {
-    "portfolioId": "PORT1",
-    "valuationDate": [
-        2026,
-        6,
-        28
-    ],
-    "requestId": "REQ-12345",
-    "currency": "USD",
-    "requestedBy": "advisor02",
-    "groups": [
-        {
-            "groupName": "equity",
-            "weightPct": 60,
-            "returnPct": 1.5
-        },
-        {
-            "groupName": "fixedIncome",
-            "weightPct": 30,
-            "returnPct": 0.4
-        },
-        {
-            "groupName": "cash",
-            "weightPct": 10,
-            "returnPct": null,
-            "fallbackReturnPct":0.05
-        }
-    ]
+  "portfolioId": "PORT1",
+  "valuationDate": [2026, 6, 28],
+  "requestId": "REQ-1-SINGLE",
+  "transactionId": "TXN-1001-SINGLE",
+  "sequenceNumber": 2,
+  "accountId": "ACC-201",
+  "transactionType": "DEBIT",
+  "amount": 40,
+  "currency": "USD",
+  "requestedBy": "advisor01",
+  "groups": [
+    { "groupName": "equity", "weightPct": 60, "returnPct": 1.5 },
+    { "groupName": "cash", "weightPct": 40, "returnPct": null }
+  ]
 }
 
 Response:
 {
     "portfolioId": "PORT1",
     "valuationDate": "2026-06-28",
-    "requestId": "REQ-12345",
-    "totalContributionPct": 1.065000,
+    "requestId": "REQ-1-SINGLE",
+    "totalContributionPct": 1.080000,
     "groupContributions": [
         {
             "groupName": "equity",
@@ -42,13 +29,8 @@ Response:
             "pricingMode": "PRIMARY"
         },
         {
-            "groupName": "fixedIncome",
-            "contributionPct": 0.120000,
-            "pricingMode": "PRIMARY"
-        },
-        {
             "groupName": "cash",
-            "contributionPct": 0.045000,
+            "contributionPct": 0.180000,
             "pricingMode": "FALLBACK_USED"
         }
     ],
@@ -57,5 +39,5 @@ Response:
     "warnings": [
         "Fallback return used for cash"
     ],
-    "processedAt": "2026-06-30T01:42:05.381050500Z"
+    "processedAt": "2026-06-30T04:07:24.079085700Z"
 }

@@ -30,6 +30,30 @@ public class AttributionValidator {
             errors.add("currency is required");
         }
 
+        if (req.getTransactionId() == null || req.getTransactionId().isBlank()) {
+            errors.add("transactionId is required");
+        }
+
+        if (req.getSequenceNumber() == null) {
+            errors.add("sequenceNumber is required");
+        } else if (req.getSequenceNumber() < 0) {
+            errors.add("sequenceNumber must be >= 0");
+        }
+
+        if (req.getAccountId() == null || req.getAccountId().isBlank()) {
+            errors.add("accountId is required");
+        }
+
+        if (req.getTransactionType() == null || req.getTransactionType().isBlank()) {
+            errors.add("transactionType is required");
+        }
+
+        if (req.getAmount() == null) {
+            errors.add("amount is required");
+        } else if (req.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+            errors.add("amount must be >= 0");
+        }
+
         if (req.getRequestedBy() == null || req.getRequestedBy().isBlank()) {
             errors.add("requestedBy is required");
         }

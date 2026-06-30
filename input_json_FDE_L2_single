@@ -1,0 +1,16 @@
+{
+  "portfolioId": "PORT1",
+  "valuationDate": [2026, 6, 28],
+  "requestId": "REQ-1-SINGLE",
+  "transactionId": "TXN-1001-SINGLE",
+  "sequenceNumber": 2,
+  "accountId": "ACC-201",
+  "transactionType": "DEBIT",
+  "amount": 40,
+  "currency": "USD",
+  "requestedBy": "advisor01",
+  "groups": [
+    { "groupName": "equity", "weightPct": 60, "returnPct": 1.5 },
+    { "groupName": "cash", "weightPct": 40, "returnPct": null }
+  ]
+}

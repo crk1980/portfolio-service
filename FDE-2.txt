@@ -7,6 +7,11 @@ Request example:
   "portfolioId": "PORT1",
   "valuationDate": [2026, 6, 28],
   "requestId": "REQ-12345",
+  "transactionId": "TXN-1001",
+  "sequenceNumber": 2,
+  "accountId": "ACC-201",
+  "transactionType": "DEBIT",
+  "amount": 40,
   "groups": [
     {
       "groupName": "equity",
