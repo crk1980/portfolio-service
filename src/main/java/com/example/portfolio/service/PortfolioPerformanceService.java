@@ -1,9 +1,7 @@
 package com.example.portfolio.service;
 
-import com.example.portfolio.dto.AttributionGroup;
 import com.example.portfolio.dto.AttributionSummary;
 import com.example.portfolio.dto.DailyReturnSummary;
-import com.example.portfolio.dto.GroupContribution;
 import com.example.portfolio.dto.PortfolioAttributionRequest;
 import com.example.portfolio.dto.PortfolioValuationRequest;
 import com.example.portfolio.dto.ValidationStatus;
@@ -15,6 +13,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +28,14 @@ public class PortfolioPerformanceService {
     private static final BigDecimal NET_CASH_FLOW_RATIO = new BigDecimal("0.20");
     private static final BigDecimal HUNDRED = new BigDecimal("100");
     private final Set<String> processedTransactionIds = ConcurrentHashMap.newKeySet();
+    private final Map<String, AttributionSummary> processedAttributionSummaries = new ConcurrentHashMap<>();
+    private final AttributionProcessor attributionProcessor;
+    private final AttributionValidator attributionValidator;
+
+    public PortfolioPerformanceService(AttributionProcessor attributionProcessor, AttributionValidator attributionValidator) {
+        this.attributionProcessor = attributionProcessor;
+        this.attributionValidator = attributionValidator;
+    }
 
     public DailyReturnSummary calculateDailyReturn(PortfolioValuationRequest req) {
         if (req == null) {
@@ -99,113 +106,27 @@ public class PortfolioPerformanceService {
             return invalidAttributionSummary("Request cannot be null");
         }
 
-        List<String> errors = validateAttributionRequest(req);
+        if (req.getRequestId() == null || req.getRequestId().isBlank()) {
+            return invalidAttributionSummary("requestId is required");
+        }
+
+        // If we've already processed this requestId, return the cached summary immediately
+        AttributionSummary cached = processedAttributionSummaries.get(req.getRequestId());
+        if (cached != null) {
+            return cached;
+        }
+
+        List<String> errors = attributionValidator.validate(req);
         if (!errors.isEmpty()) {
             return invalidAttributionSummary(String.join("; ", errors));
         }
 
-        // Log incoming request as JSON for observability
-        try {
-            ObjectMapper om = new ObjectMapper();
-            om.findAndRegisterModules();
-            String reqJson = om.writeValueAsString(req);
-            logger.info("Incoming PortfolioAttributionRequest: {}", reqJson);
-        } catch (Exception e) {
-            logger.warn("Failed to serialize PortfolioAttributionRequest", e);
-        }
-
-        AttributionSummary summary = new AttributionSummary();
-        List<GroupContribution> contributions = new ArrayList<>();
-        List<String> warnings = new ArrayList<>();
-        BigDecimal totalContribution = BigDecimal.ZERO;
-
-        for (AttributionGroup group : req.getGroups()) {
-            BigDecimal returnPct = group.getReturnPct();
-            String pricingMode = "PRIMARY";
-
-            if (returnPct == null) {
-                pricingMode = "FALLBACK";
-                returnPct = estimateFallbackReturnPct(group.getGroupName());
-                warnings.add("Fall back pricing used for " + group.getGroupName());
-            }
-
-            BigDecimal contribution = group.getWeightPct()
-                    .multiply(returnPct)
-                    .divide(HUNDRED, 12, RoundingMode.HALF_UP);
-
-            GroupContribution contributionSummary = new GroupContribution();
-            contributionSummary.setGroupName(group.getGroupName());
-            contributionSummary.setContributionPct(contribution.setScale(6, RoundingMode.HALF_UP));
-            contributionSummary.setPricingMode(pricingMode);
-            contributions.add(contributionSummary);
-
-            totalContribution = totalContribution.add(contribution);
-        }
-
-        summary.setPortfolioId(req.getPortfolioId());
-        summary.setValuationDate(req.getValuationDate());
-        summary.setRequestId(req.getRequestId());
-        summary.setGroupContributions(contributions);
-        summary.setTotalContributionPct(totalContribution.setScale(6, RoundingMode.HALF_UP));
-        summary.setStatus("VALID");
-        summary.setDegraded(!warnings.isEmpty());
-        summary.setWarnings(warnings.isEmpty() ? Collections.emptyList() : warnings);
-        summary.setProcessedAt(Instant.now().toString());
-        return summary;
-    }
-
-    private BigDecimal estimateFallbackReturnPct(String groupName) {
-        if (groupName == null) {
-            return BigDecimal.ZERO;
-        }
-
-        String normalized = groupName.trim().toLowerCase();
-        return switch (normalized) {
-            case "cash" -> new BigDecimal("0.45");
-            case "fixed income", "fixed-income", "fixed_income" -> new BigDecimal("0.75");
-            case "equity" -> new BigDecimal("1.50");
-            default -> BigDecimal.ZERO;
-        };
-    }
-
-    private List<String> validateAttributionRequest(PortfolioAttributionRequest req) {
-        List<String> errors = new ArrayList<>();
-        if (req.getPortfolioId() == null || req.getPortfolioId().isBlank()) {
-            errors.add("portfolioId is required");
-        }
-
-        if (req.getRequestId() == null || req.getRequestId().isBlank()) {
-            errors.add("requestId is required");
-        }
-
-        if (req.getCurrency() == null || req.getCurrency().isBlank()) {
-            errors.add("currency is required");
-        }
-
-        if (req.getRequestedBy() == null || req.getRequestedBy().isBlank()) {
-            errors.add("requestedBy is required");
-        }
-
-        if (req.getValuationDate() == null) {
-            errors.add("valuationDate is required");
-        }
-
-        if (req.getGroups() == null || req.getGroups().isEmpty()) {
-            errors.add("groups are required");
-        } else {
-            for (AttributionGroup group : req.getGroups()) {
-                if (group.getGroupName() == null || group.getGroupName().isBlank()) {
-                    errors.add("groupName is required for each group");
-                }
-                if (group.getWeightPct() == null) {
-                    errors.add("weightPct is required for group " + group.getGroupName());
-                } else if (group.getWeightPct().compareTo(BigDecimal.ZERO) < 0) {
-                    errors.add("weightPct must be >= 0 for group " + group.getGroupName());
-                }
-            }
-        }
-
-        return errors;
+        // Create the summary first, then attempt to store it. If another thread
+        // stored one concurrently, return that instance to ensure idempotent
+        // behavior (same object reference) for the same requestId.
+        AttributionSummary created = attributionProcessor.process(req);
+        AttributionSummary existing = processedAttributionSummaries.putIfAbsent(req.getRequestId(), created);
+        return existing != null ? existing : created;
     }
 
     private AttributionSummary invalidAttributionSummary(String reason) {

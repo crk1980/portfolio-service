@@ -53,3 +53,34 @@ Response:
   "status": "UP",
   "service": "Portfolio Performance"
 }
+
+POST /api/performance/attribution
+Request JSON fields:
+- portfolioId (string, required)
+- valuationDate (array of year, month, day, required)
+- requestId (string, required)
+- currency (string, required)
+- requestedBy (string, required)
+- groups (array, required)
+  - groupName (string, required)
+  - weightPct (number, required)
+  - returnPct (number, optional)
+
+Expected behavior:
+- If one or more groups omit returnPct, the service must fall back to degraded pricing.
+- pricingMode should be "PRIMARY" when returnPct is supplied and "FALLBACK" when returnPct is missing.
+- degraded should be true when fallback pricing or any degraded processing occurs.
+- warnings should describe fallback pricing or degraded processing.
+
+Expected response fields:
+- portfolioId
+- valuationDate
+- requestId
+- totalContributionPct
+- groupContributions
+- status
+- degraded
+- warnings
+- processedAt
+
+For prompt implementation details, see FDE-2.txt.

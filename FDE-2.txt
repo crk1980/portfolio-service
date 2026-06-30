@@ -1,0 +1,57 @@
+FDE-2: Portfolio Attribution Payload Prompt
+
+This file defines the payload attribution prompt used for the /api/performance/attribution endpoint.
+
+Request example:
+{
+  "portfolioId": "PORT1",
+  "valuationDate": [2026, 6, 28],
+  "requestId": "REQ-12345",
+  "groups": [
+    {
+      "groupName": "equity",
+      "weightPct": 60,
+      "returnPct": 1.5
+    },
+    {
+      "groupName": "cash",
+      "weightPct": 40,
+      "returnPct": null
+    }
+  ],
+  "currency": "USD",
+  "requestedBy": "advisor02"
+}
+
+Response example:
+{
+  "portfolioId": "PORT1",
+  "valuationDate": [2026, 6, 28],
+  "requestId": "REQ-12345",
+  "totalContributionPct": 1.2,
+  "groupContributions": [
+    {
+      "groupName": "equity",
+      "contributionPct": 0.900000,
+      "pricingMode": "PRIMARY"
+    },
+    {
+      "groupName": "cash",
+      "contributionPct": 0.300000,
+      "pricingMode": "FALLBACK_USED"
+    }
+  ],
+  "status": "VALID",
+  "degraded": true,
+  "warnings": ["Fallback return used for cash"],
+  "processedAt": "2026-06-28T10:45:00Z"
+}
+
+Behavior expectations:
+- `requestId` is the idempotency key for attribution requests. Re-submitting the same `requestId` must return the original response instance if it has already been processed.
+- Total group weight must be between 99 and 101 percent. Otherwise the response must be `INVALID_INPUT` with a warning about total group weight.
+- If a group `returnPct` is missing and fallback pricing is available for that group, use fallback pricing and set `pricingMode` to `FALLBACK_USED`.
+- If a group `returnPct` is missing and no fallback is available, set `pricingMode` to `NO_FALLBACK`, keep contribution at 0, and include a warning.
+- `degraded` should be `true` whenever fallback pricing or degraded processing is used.
+- `status` should be `VALID` for successful attribution, `DEGRADED` for one missing return without fallback, `REVIEW_REQUIRED` when multiple missing returns or degraded processing requires review, and `INVALID_INPUT` for malformed requests.
+- `warnings` must clearly describe fallback use, missing return values, and any degraded or review-required conditions.
